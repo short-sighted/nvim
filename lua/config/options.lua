@@ -1,5 +1,24 @@
 local opt = vim.opt
 
+-- Windows shell (:terminal, :!, filters and :make); keep Unix defaults.
+-- See :help shell-powershell and :help shell-pwsh.
+if vim.fn.has("win32") == 1 then
+  local pwsh = vim.fn.executable("pwsh") == 1
+  opt.shell = pwsh and "pwsh" or "powershell"
+  opt.shellcmdflag = "-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command "
+    .. "[Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.UTF8Encoding]::new();"
+    .. "$PSDefaultParameterValues['Out-File:Encoding']='utf8';"
+  if pwsh then
+    opt.shellcmdflag:append("$PSStyle.OutputRendering='PlainText';")
+    vim.env.__SuppressAnsiEscapeSequences = "1"
+  end
+  opt.shellpipe = "> %s 2>&1"
+  opt.shellredir = "> %s 2>&1"
+  opt.shellquote = ""
+  opt.shellxquote = ""
+  opt.shelltemp = false
+end
+
 -- UI
 opt.number = true
 opt.relativenumber = true

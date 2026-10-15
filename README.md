@@ -16,6 +16,8 @@
 
 需要 Neovim >= 0.12、Git、ripgrep，以及所用语言的工具链：Node/npm、Rust/Cargo、Go、.NET SDK、Python。Mason 安装服务，不代替编译器和项目依赖。C# 当前使用 Roslyn 5.12，需要符合服务要求的 .NET SDK；本机验证使用 SDK 10.0.401。
 
+Windows 的默认 shell 优先选择 PATH 中的 PowerShell 7（`pwsh`），未安装时使用系统自带的 Windows PowerShell（`powershell`），并配置命令参数、UTF-8 输出和重定向。macOS、Linux（含 WSL）沿用 Neovim 原有 shell。配置参考 [Neovim PowerShell 帮助](https://neovim.io/doc/user/options/#shell-powershell)。
+
 文件图标与状态栏符号需要终端使用 Nerd Font。iTerm2 在 **Settings → Profiles → 当前使用的 profile → Text → Font** 中选择 Nerd Font；本机已安装的字体名称包括 `Maple Mono NF CN` 和 `JetBrainsMono NFM`。如果启用了独立的 Non-ASCII Font，也需要将它设为 Nerd Font，或关闭独立字体选项，让非 ASCII 字符使用主字体。仅安装字体并不会改变 iTerm2 当前使用的字体；Monaco 不包含这些图标。修改后新开一个使用该 profile 的标签页检查。参见 [iTerm2 字体设置](https://iterm2.com/documentation-preferences-profiles-text.html)。
 
 打开 Neovim 时，`vim.pack.add()` 按锁文件安装缺少的插件。Mason 的安装清单自动安装常用 LSP；Roslyn 使用额外 registry 单独安装。正常启动不自动更新已安装插件和服务。初次安装需联网，安装完成会启用新服务，必要时重新打开文件。
