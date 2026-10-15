@@ -1,0 +1,26 @@
+{
+  "Function": {
+    "prefix": "def",
+    "body": [
+      "def ${1:name}(${2:args})${3: -> None}:",
+      "    $0"
+    ],
+    "description": "Python function"
+  },
+  "Main guard": {
+    "prefix": "main",
+    "body": [
+      "if __name__ == \"__main__\":",
+      "    ${1:main()}$0"
+    ],
+    "description": "Main guard"
+  },
+  "Test": {
+    "prefix": "test",
+    "body": [
+      "def test_${1:name}():",
+      "    $0"
+    ],
+    "description": "pytest test"
+  }
+}

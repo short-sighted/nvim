@@ -1,0 +1,27 @@
+{
+  "Class": {
+    "prefix": "class",
+    "body": [
+      "public class ${1:Name}",
+      "{",
+      "    $0",
+      "}"
+    ],
+    "description": "C# class"
+  },
+  "Async method": {
+    "prefix": "async",
+    "body": [
+      "public async Task${1:<T>} ${2:Name}Async(${3:args})",
+      "{",
+      "    $0",
+      "}"
+    ],
+    "description": "Async Task method"
+  },
+  "Property": {
+    "prefix": "prop",
+    "body": "public ${1:string} ${2:Name} { get; set; }$0",
+    "description": "Auto property"
+  }
+}

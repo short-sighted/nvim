@@ -1,0 +1,20 @@
+{
+  "Async function": {
+    "prefix": "afn",
+    "body": [
+      "async function ${1:name}(${2:args}) {",
+      "  $0",
+      "}"
+    ],
+    "description": "Async function"
+  },
+  "Arrow function": {
+    "prefix": "fn",
+    "body": [
+      "const ${1:name} = (${2:args}) => {",
+      "  $0",
+      "};"
+    ],
+    "description": "Arrow function"
+  }
+}

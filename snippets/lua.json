@@ -1,0 +1,22 @@
+{
+  "Module": {
+    "prefix": "mod",
+    "body": [
+      "local M = {}",
+      "",
+      "$0",
+      "",
+      "return M"
+    ],
+    "description": "Lua module"
+  },
+  "Function": {
+    "prefix": "fn",
+    "body": [
+      "local function ${1:name}(${2:args})",
+      "  $0",
+      "end"
+    ],
+    "description": "Local function"
+  }
+}

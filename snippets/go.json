@@ -1,0 +1,30 @@
+{
+  "Function": {
+    "prefix": "fn",
+    "body": [
+      "func ${1:name}(${2:args}) ${3:error} {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Go function"
+  },
+  "Error guard": {
+    "prefix": "ife",
+    "body": [
+      "if err != nil {",
+      "\treturn ${1:err}",
+      "}",
+      "$0"
+    ],
+    "description": "Return on error"
+  },
+  "Test": {
+    "prefix": "test",
+    "body": [
+      "func Test${1:Name}(t *testing.T) {",
+      "\t$0",
+      "}"
+    ],
+    "description": "Go test (import testing)"
+  }
+}

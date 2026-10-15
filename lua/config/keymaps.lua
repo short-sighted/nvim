@@ -1,0 +1,30 @@
+vim.g.mapleader = " "
+vim.g.maplocalleader = "\\"
+
+local map = vim.keymap.set
+map("c", "<C-p>", "<Up>", { desc = "上一条命令" })
+map("c", "<C-n>", "<Down>", { desc = "下一条命令" })
+map("n", "<Esc>", "<cmd>nohlsearch<cr>", { desc = "清除搜索高亮" })
+map("n", "<leader>w", "<cmd>write<cr>", { desc = "保存文件" })
+map("n", "<leader>q", "<cmd>confirm quit<cr>", { desc = "退出窗口" })
+map("n", "<C-h>", "<C-w>h", { desc = "左侧窗口" })
+map("n", "<C-j>", "<C-w>j", { desc = "下方窗口" })
+map("n", "<C-k>", "<C-w>k", { desc = "上方窗口" })
+map("n", "<C-l>", "<C-w>l", { desc = "右侧窗口" })
+map("n", "<leader>sv", "<cmd>vsplit<cr>", { desc = "垂直分屏" })
+map("n", "<leader>sh", "<cmd>split<cr>", { desc = "水平分屏" })
+map("n", "<leader>se", "<C-w>=", { desc = "均分窗口" })
+map("n", "<S-h>", "<cmd>bprevious<cr>", { desc = "上一个文件" })
+map("n", "<S-l>", "<cmd>bnext<cr>", { desc = "下一个文件" })
+map("n", "<leader>bd", "<cmd>confirm bdelete<cr>", { desc = "关闭文件" })
+map("n", "]q", "<cmd>cnext<cr>", { desc = "下一条结果" })
+map("n", "[q", "<cmd>cprevious<cr>", { desc = "上一条结果" })
+map("n", "<leader>xo", "<cmd>copen<cr>", { desc = "打开结果列表" })
+map("n", "<leader>xc", "<cmd>cclose<cr>", { desc = "关闭结果列表" })
+map("n", "<leader>tc", function()
+  vim.wo.colorcolumn = vim.wo.colorcolumn == "" and "100" or ""
+end, { desc = "切换第 100 列参考线" })
+map("n", "<leader>tt", "<cmd>botright split | terminal<cr>", { desc = "打开终端" })
+map("t", "<Esc><Esc>", "<C-\\><C-n>", { desc = "终端返回普通模式" })
+map("x", "<", "<gv", { desc = "减少缩进" })
+map("x", ">", ">gv", { desc = "增加缩进" })

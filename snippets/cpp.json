@@ -1,0 +1,23 @@
+{
+  "Main": {
+    "prefix": "main",
+    "body": [
+      "int main(int argc, char* argv[]) {",
+      "    $0",
+      "    return 0;",
+      "}"
+    ],
+    "description": "C++ main"
+  },
+  "Class": {
+    "prefix": "class",
+    "body": [
+      "class ${1:Name} {",
+      "public:",
+      "    ${1:Name}() = default;",
+      "    $0",
+      "};"
+    ],
+    "description": "C++ class"
+  }
+}

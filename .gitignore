@@ -1,0 +1,46 @@
+# macOS metadata
+.DS_Store
+._*
+
+# Vim/Neovim swap, backup, undo and session files
+*.sw?
+*~
+*.un~
+/Session.vim
+/Sessionx.vim
+
+# Runtime data belongs in stdpath("data"/"state"/"cache"), not this repository.
+/nvim.log
+/logs/
+/.cache/
+/.state/
+/backup/
+/swap/
+/undo/
+/shada/
+/mason/
+/site/
+/parser/*.so
+/parser/*.dylib
+/parser/*.dll
+
+# Locally installed development/test dependencies
+node_modules/
+.venv/
+__pycache__/
+
+# Debugger and temporary verification output
+/__debug_bin*
+/tmp/
+/tests/.tmp/
+
+# Local credentials; sanitized examples may be committed.
+.env
+.env.*
+!.env.example
+!.env.sample
+
+# Local implementation plans and agent execution records
+/docs/superpowers/
+
+# Keep nvim-pack-lock.json tracked for reproducible plugin revisions.

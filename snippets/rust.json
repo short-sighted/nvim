@@ -1,0 +1,30 @@
+{
+  "Function": {
+    "prefix": "fn",
+    "body": [
+      "fn ${1:name}(${2:args})${3: -> Result<(), Box<dyn std::error::Error>>} {",
+      "    $0",
+      "}"
+    ],
+    "description": "Rust function"
+  },
+  "Test": {
+    "prefix": "test",
+    "body": [
+      "#[test]",
+      "fn ${1:test_name}() {",
+      "    $0",
+      "}"
+    ],
+    "description": "Rust unit test"
+  },
+  "Impl": {
+    "prefix": "impl",
+    "body": [
+      "impl ${1:Type} {",
+      "    $0",
+      "}"
+    ],
+    "description": "Implementation block"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "Component": {
+    "prefix": "rfc",
+    "body": [
+      "type ${1:Component}Props = {",
+      "  ${2:children?: React.ReactNode;}",
+      "};",
+      "",
+      "export default function ${1:Component}(${3:props}: ${1:Component}Props) {",
+      "  return <div>$0</div>;",
+      "}"
+    ],
+    "description": "React TypeScript component"
+  }
+}
