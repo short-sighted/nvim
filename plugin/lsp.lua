@@ -3,6 +3,7 @@ vim.pack.add({
   { src = "https://github.com/mason-org/mason.nvim", version = vim.version.range("2") },
   { src = "https://github.com/mason-org/mason-lspconfig.nvim", version = vim.version.range("2") },
   "https://github.com/seblyng/roslyn.nvim",
+  "https://github.com/yioneko/nvim-vtsls",
   -- Capability generation does not require completion.setup() to have run.
   { src = "https://github.com/saghen/blink.cmp", version = vim.version.range("1") },
 })
@@ -24,7 +25,20 @@ for source in require("mason-registry").sources:iterate({ include_uninstalled = 
   end
 end
 require("roslyn").setup({ broad_search = true })
-vim.lsp.config("*", { capabilities = require("blink.cmp").get_lsp_capabilities() })
+local capabilities = require("blink.cmp").get_lsp_capabilities()
+-- mini.files implements the file-operation hooks, but Nvim defaults these
+-- capabilities to false. Advertise them so servers can update imports.
+capabilities.workspace = capabilities.workspace or {}
+capabilities.workspace.fileOperations = {
+  dynamicRegistration = false,
+  didCreate = true,
+  willCreate = true,
+  didRename = true,
+  willRename = true,
+  didDelete = true,
+  willDelete = true,
+}
+vim.lsp.config("*", { capabilities = capabilities })
 
 vim.diagnostic.config({
   severity_sort = true,
@@ -48,7 +62,8 @@ vim.lsp.config("lua_ls", {
 vim.lsp.config("rust_analyzer", {
   settings = {
     ["rust-analyzer"] = {
-      cargo = { allFeatures = true, buildScripts = { enable = true } },
+      -- Respect project default features; forcing all may enable conflicting backends.
+      cargo = { buildScripts = { enable = true } },
       procMacro = { enable = true },
       check = { command = "clippy" },
       -- Debugging is handled by DAP rather than an unregistered LSP command.
@@ -57,6 +72,19 @@ vim.lsp.config("rust_analyzer", {
   },
 })
 vim.lsp.config("clangd", {
+  root_dir = function(bufnr, on_dir)
+    local file = vim.api.nvim_buf_get_name(bufnr)
+    if file == "" then
+      return
+    end
+    local root = require("config.cpp").root(bufnr)
+      or vim.fs.root(file, {
+        { ".clangd", "compile_commands.json", "compile_flags.txt", "Makefile", "makefile", "GNUmakefile" },
+        ".git",
+      })
+      or vim.fs.dirname(file)
+    on_dir(root)
+  end,
   cmd = {
     "clangd",
     "--background-index",
@@ -109,9 +137,19 @@ vim.lsp.config("basedpyright", {
 vim.lsp.config("ruff", {})
 vim.lsp.config("vtsls", {
   filetypes = { "javascript", "javascriptreact", "typescript", "typescriptreact", "vue" },
+  root_dir = require("config.frontend").typescript_root,
   settings = {
+    typescript = {
+      suggest = { completeFunctionCalls = true },
+      updateImportsOnFileMove = { enabled = "always" },
+    },
+    javascript = {
+      suggest = { completeFunctionCalls = true },
+      updateImportsOnFileMove = { enabled = "always" },
+    },
     vtsls = {
       autoUseWorkspaceTsdk = true,
+      enableMoveToFileCodeAction = true,
       tsserver = {
         globalPlugins = {
           {
@@ -129,6 +167,10 @@ vim.lsp.config("vtsls", {
   },
 })
 vim.lsp.config("eslint", { settings = { format = { enable = false } } })
+vim.lsp.config("tailwindcss", {
+  workspace_required = true,
+  root_dir = require("config.frontend").tailwind_root,
+})
 vim.lsp.config("jsonls", { settings = { json = { validate = { enable = true } } } })
 
 local group = vim.api.nvim_create_augroup("user-lsp", { clear = true })
@@ -158,6 +200,9 @@ vim.api.nvim_create_autocmd("LspAttach", {
     map("n", "<leader>lk", vim.lsp.buf.signature_help, "函数参数提示")
     map("n", "<leader>lr", vim.lsp.buf.rename, "重命名符号")
     map({ "n", "x" }, "<leader>la", vim.lsp.buf.code_action, "代码操作")
+    map("n", "<leader>lF", function()
+      vim.lsp.buf.code_action({ context = { only = { "source.fixAll" }, diagnostics = {} }, apply = true })
+    end, "修复文件问题")
     map("n", "<leader>lo", function()
       vim.lsp.buf.code_action({
         context = { only = { "source.organizeImports" }, diagnostics = {} },
@@ -173,6 +218,37 @@ vim.api.nvim_create_autocmd("LspAttach", {
     end
     if client.name == "clangd" then
       map("n", "<leader>lh", "<cmd>LspClangdSwitchSourceHeader<cr>", "切换源码 / 头文件")
+    elseif client.name == "vtsls" then
+      -- This upstream post-edit command only records telemetry; the edit is
+      -- already applied and vtsls does not expose it as an LSP server command.
+      client.commands["_typescript.didOrganizeImports"] = function() end
+      map("n", "<leader>lC", function()
+        require("vtsls").commands.goto_project_config(ev.buf)
+      end, "打开 TypeScript 项目配置")
+      map("n", "<leader>lN", function()
+        require("vtsls").commands.rename_file(ev.buf)
+      end, "重命名文件并更新导入")
+      for key, kind in pairs({ lA = "source.addMissingImports.ts", lu = "source.removeUnusedImports" }) do
+        map("n", "<leader>" .. key, function()
+          vim.lsp.buf.code_action({ context = { only = { kind }, diagnostics = {} }, apply = true })
+        end, key == "lA" and "添加缺失的导入" or "移除未使用的导入")
+      end
+    elseif client.name == "rust_analyzer" then
+      map("n", "<leader>lM", function()
+        local params = vim.lsp.util.make_position_params(0, client.offset_encoding)
+        client:request("rust-analyzer/expandMacro", params, function(err, result)
+          if err then
+            vim.notify("宏展开失败：" .. err.message, vim.log.levels.WARN)
+          elseif result and result.expansion and vim.api.nvim_get_current_buf() == ev.buf then
+            vim.lsp.util.open_floating_preview(vim.split(result.expansion, "\n"), "rust", {
+              title = "宏展开：" .. result.name,
+              focusable = true,
+            })
+          elseif not result then
+            vim.notify("请把光标移到宏调用上。", vim.log.levels.INFO)
+          end
+        end, ev.buf)
+      end, "展开当前 Rust 宏")
     end
   end,
 })

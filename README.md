@@ -61,11 +61,15 @@ Windows 的默认 shell 优先选择 PATH 中的 PowerShell 7（`pwsh`），未�
 
 C/C++ 项目应生成 `compile_commands.json`，例如 CMake 设置 `CMAKE_EXPORT_COMPILE_COMMANDS=ON`；非标准构建目录可在项目 `.clangd` 中设置 `CompileFlags.CompilationDatabase`。不要在全局配置中硬编码某个编译器或项目路径。
 
-Rust 需要可运行的工具链、Clippy 和标准库源码。使用 rustup 管理时，可按当前工具链执行 `rustup component add clippy rust-src rustfmt`。如果使用 mise shim，请先确认当前项目选中了可运行的语言版本。
+Rust 的分析和任务默认尊重项目的 Cargo features，不全局强制启用所有 features；存在互斥后端时不会被全局配置同时打开。`空格 lM` 查看当前宏的展开结果。Rust 需要可运行的工具链、Clippy 和标准库源码。使用 rustup 管理时，可按当前工具链执行 `rustup component add clippy rust-src rustfmt`。如果使用 mise shim，请先确认当前项目选中了可运行的语言版本。
 
 C# 打开 `.cs` 时自动寻找 `.sln`、`.slnx` 或 `.csproj`，多 solution 用 `:Roslyn target` 切换。首次分析前通常需要恢复项目依赖。Roslyn 使用独立 stdio 进程，退出编辑器后不会保留 daemon。
 
-前端项目需要自己的 ESLint、Vue/Svelte、TypeScript 等依赖。Prettier 优先使用项目 `node_modules/.bin`。Svelte 的格式化还需要项目安装并配置 `prettier-plugin-svelte`；Vue 2 需要按 Vue language-tools 文档使用兼容版本与配置。
+React 使用 JS/JSX/TS/TSX 的 vtsls；Vue 3 使用 vue_ls + vtsls。JS 项目即使没有锁文件，也按 package.json/tsconfig/jsconfig 定位，不落到编辑器启动目录；Deno 项目不交给 vtsls。前端项目需要自己的 ESLint、Vue/Svelte、TypeScript 等依赖。Prettier 优先使用项目 `node_modules/.bin`。Svelte 的格式化还需要项目安装并配置 `prettier-plugin-svelte`；Vue 2 需要按 Vue language-tools 文档使用兼容版本与配置。
+
+Tailwind LSP 只在最近的包声明 `tailwindcss` 依赖，或目录中存在 `tailwind.config.{js,cjs,mjs,ts,cts,mts}` 时启用。普通 `.git`、PostCSS 配置和描述文字不触发；monorepo 中普通子包不会继承上层依赖而误启动。v4 无需配置文件，服务会从 CSS 的 `@import "tailwindcss"` 识别入口。若项目使用共享 Tailwind 包而当前包既无依赖声明也无配置，可在项目配置中显式设置该服务的 `root_dir` 和 `tailwindCSS.experimental.configFile`。参见 [Tailwind IntelliSense 项目检测](https://github.com/tailwindlabs/tailwindcss-intellisense#installation)。
+
+HTML、Vue、JSX/TSX 由 nvim-ts-autotag 提供标签自动闭合和成对重命名。vtsls 的补全可以包含函数参数占位符；`空格 lA` 添加缺失导入、`空格 lu` 删除未使用导入、`空格 lo` 整理导入、`空格 lF` 选择文件修复、`空格 lC` 打开 TS 项目配置、`空格 lN` 重命名文件并更新引用。mini.files 的文件重命名也接入 LSP，配置已声明所需文件操作能力；同步后检查编辑器中的 import 变更再保存。nvim-vtsls 补充 TypeScript 的客户端重构命令。
 
 ## 快捷键
 
@@ -117,16 +121,36 @@ nvim-treesitter 使用 `main` 分支和原生 `vim.treesitter.start()`，折叠�
 
 已安装 C/C++、Rust、Go、C#、Python、JS/TS/TSX、Vue、Svelte、HTML/CSS、JSON/JSONC、YAML/TOML、Bash、Lua、Markdown parsers。安装需要 C 编译器和 `tree-sitter` CLI（本机 0.27.1）。插件更新后重启并执行 `:TSUpdate`，新增语言使用 `:TSInstall <语言>`。Parser 属于 Tree-sitter；语言服务仍由 Mason 管理。
 
+## C++ 工程工作流
+
+CMake 使用 cmake-tools.nvim，配置/构建/运行输出进入现有 Overseer，调试复用现有 DAP。clangd 按外层 CMake 工程或 Makefile/编译数据库定位；嵌套 `src/CMakeLists.txt` 不会被当成另一个独立工程。
+
+1. 打开源码后按 `空格 cR` 选择当前 CMake 工程；这只显式设置当前标签页目录，普通文件打开不切换目录。
+2. 有 presets：`空格 cp` 选 configure preset，`空格 cP` 选 build preset，再 `空格 cc` 配置。没有 presets：`空格 cv` 选 Debug，再 `空格 cc`。
+3. `空格 ct` 选构建目标，`空格 cl` 选可执行目标；`空格 cb` 构建，`空格 cr` 构建并运行，`空格 cd` 构建并调试。
+4. `空格 rl` 看输出，`空格 cs` 停止 CMake 任务；断点和单步仍用 `空格 db`、F10/F11。
+
+CMake 只有一个明确选定的活动工程；切换标签页不会更换它。在另一工程使用 CMake 时再按 `空格 cR`，任务及其完成处理、选择框结束前不允许切换。这样可避免构建 A 后误运行 B。推荐使用这些带检查的快捷键；原生 `:CMake*` 命令直接操作选定工程。
+
+默认生成 `out/Debug` 等按构建类型分开的目录，presets 的 binaryDir 优先。配置时启用编译数据库，并把生成的 `compile_commands.json` 复制到源码根，避免 Windows 软链接权限要求；不要把生成文件当作手写配置提交。使用支持导出数据库的 Ninja/Makefiles generator；特殊工具链的参数写入 presets 或项目 `.clangd`。
+
+普通 `CMakeRun` 使用可输入的 Overseer 终端。当前 macOS 的原生 LLDB 调试使用 DAP 内部控制台，输出可见但不提供交互式 stdin；需要调试终端输入时，应按项目配置兼容的 codelldb/外部终端方案。此设置绕过本机 Xcode LLDB 的 terminal launcher 超时。无自动保存构建或启动时构建。
+
+Makefile 工程使用 `空格 rr` 选择实际 make 目标，输出/重跑沿用 Overseer；配置支持 `Makefile`、`makefile`、`GNUmakefile` 定位项目。复杂 CMake 和纯 Make 工程均可通过 `.vscode/tasks.json` / `launch.json` 定义自有流程。
+
 ## 运行与测试
 
 | 操作 | 快捷键 |
 | --- | --- |
+| 构建 / 运行项目或开发服务 / 检查测试 / 静态检查 | `<leader>rb` / `rR` / `rc` / `rv` |
 | 选择运行/构建任务 / 任务列表 / 重跑最近任务 | `<leader>rr` / `rl` / `ra` |
 | 运行光标附近测试 / 当前文件 / 当前项目 | `<leader>rt` / `rf` / `rT` |
 | 调试光标附近测试 / 停止测试 | `<leader>rd` / `rs` |
 | 测试输出 / 输出面板 / 测试树 | `<leader>ro` / `rp` / `rS` |
 
-`rt`/`rd` 操作光标所在处或附近的测试。Overseer 自动提供常见 Cargo、npm、Make 等任务，并追加 Go、.NET、CMake 的构建/运行/测试模板。CMake 首次选择配置任务，默认 Debug 构建目录 `build`，可在表单中修改。项目 `.vscode/tasks.json` 按当前文件项目查找，`${workspaceFolder}` 按该文件对应 workspace 展开。任务面板 Enter 选择操作、`o` 打开输出、`?` 查看键位、`q`/Esc 关闭。
+共享项目操作按语言分派：前端使用当前包的 `build`、`dev`/`start`、`typecheck`/`type-check`/`check`、`lint` 脚本；识别 packageManager 和 npm/pnpm/yarn/bun 锁文件，包括上层工作区包管理器，但不会用工作区根脚本代替当前包脚本。未定义脚本时给出提示，不猜测安装或创建依赖。Rust 对应 Cargo build/run/check/clippy，Go 对应 go build/run/test/vet，C# 对应当前 csproj 的 dotnet build/run/test/format --verify-no-changes，CMake 对应选定工程的构建/运行/CTest。`rv` 不自动改写 C# 源码。
+
+`rt`/`rd` 操作光标所在处或附近的测试。`rr` 提供 Cargo、当前前端包脚本、Make 目标，以及 Go/.NET/CMake 的任务模板。原有 CMake 简单模板仍保留作备用（默认 `build`），日常 presets/目标选择推荐上面的 CMake 工作流。项目 `.vscode/tasks.json` 按当前文件项目查找，`${workspaceFolder}` 按该文件对应 workspace 展开。任务面板 Enter 选择操作、`o` 打开输出、`?` 查看键位、`q`/Esc 关闭。
 
 Neotest 在第一次使用测试操作时初始化，不在打开编辑器时自动运行测试，不启用 watch。发现会排除 node_modules、target、bin/obj、build 等依赖和产物目录。
 
@@ -202,6 +226,10 @@ nvim --headless -i NONE '+luafile tests/daily.lua'
 nvim --headless -i NONE '+luafile tests/project_tasks.lua'
 nvim --headless -i NONE '+luafile tests/dotnet_isolation.lua'
 nvim --headless -i NONE '+luafile tests/undo.lua'
+nvim --headless -i NONE '+luafile tests/frontend.lua'
+nvim --headless -i NONE '+luafile tests/frontend_editing.lua'
+nvim --headless -i NONE '+luafile tests/project_actions.lua'
+nvim --headless -i NONE '+luafile tests/cpp.lua'
 ```
 
 该检查验证 runtime 命令、语言局部设置及恢复、带空格的项目路径、项目 launch.json、snippet 展开和状态栏。完整真实 LSP、格式化与调试验证结果记录在实施计划的执行记录中。
@@ -220,3 +248,5 @@ nvim --headless -i NONE '+luafile tests/undo.lua'
 插件安装目录、Mason 工具、parser、缓存、日志、swap/undo 文件和会话文件属于本机运行数据，不纳入仓库。默认数据位置可通过 `:echo stdpath('data')`、`:echo stdpath('state')` 和 `:echo stdpath('cache')` 查看。`.gitignore` 同时排除误放在配置目录中的常见运行数据、本地 `.env` 和 `docs/superpowers/` 中的内部实施记录；`.env.example`、`.env.sample` 可提交。
 
 插件选型文档保留调研背景；当前已启用的功能和操作以本 README 为准。
+
+CMake 集成测试需要本机 CMake、C++ 编译器和 Make；`NVIM_CPP_DAP_TEST=1` 可额外执行本机原生 LLDB 的断点/单步检查。所有构建均使用临时工程。2026-10-19 的实际验证还覆盖普通 Vite JS、Vue 3、临时 React/TSX 的类型/导入操作、Tailwind v4 类名补全，以及 Rust/.NET/Go 的真实构建/检查/运行。Windows shell 分支有模拟检查，Windows C++/前端流程未做真机验收。

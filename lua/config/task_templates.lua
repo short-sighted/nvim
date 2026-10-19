@@ -12,6 +12,14 @@ function M.definitions(dir)
       end,
     }
   end
+  local frontend = require("config.frontend")
+  local package_root, package = frontend.package(vim.fs.joinpath(dir, "package.json"))
+  if package_root == dir and type(package.scripts) == "table" then
+    local manager = frontend.package_manager(dir)
+    for script in pairs(package.scripts) do
+      add(manager .. " run " .. script, { manager, "run", script })
+    end
+  end
   if vim.uv.fs_stat(vim.fs.joinpath(dir, "go.mod")) or vim.uv.fs_stat(vim.fs.joinpath(dir, "go.work")) then
     add("Go: 构建项目", { "go", "build", "./..." })
     add("Go: 运行项目", { "go", "run", "." })

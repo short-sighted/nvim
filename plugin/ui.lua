@@ -32,6 +32,7 @@ require("which-key").setup({
   icons = { mappings = false },
   spec = {
     { "<leader>b", group = "文件缓冲区" },
+    { "<leader>c", group = "CMake 工程 / 目标" },
     { "<leader>d", group = "调试" },
     { "<leader>f", group = "查找 / 操作搜索" },
     { "<leader>g", group = "Git" },

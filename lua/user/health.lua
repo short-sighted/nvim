@@ -86,7 +86,7 @@ function M.check()
   end
   health.info("Project Python: " .. tools.python())
   health.start("代码结构与测试")
-  for _, binary in ipairs({ "tree-sitter", "cc", "cmake", "ctest", "cargo-nextest" }) do
+  for _, binary in ipairs({ "tree-sitter", "cc", "cmake", "ctest", "make", "cargo-nextest" }) do
     local path = tools.executable(binary)
     if path then
       health.ok(binary .. ": " .. path)

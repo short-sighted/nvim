@@ -2,7 +2,7 @@ vim.pack.add({ "https://github.com/stevearc/overseer.nvim" })
 require("overseer").setup({
   -- The project-scoped listener uses public Overseer APIs without changing cwd.
   dap = false,
-  disable_template_modules = { "overseer.template.vscode" },
+  disable_template_modules = { "overseer.template.vscode", "overseer.template.npm" },
   task_list = {
     direction = "bottom",
     keymaps = {
