@@ -24,7 +24,11 @@ require("blink.cmp").setup({
     documentation = { auto_show = true, auto_show_delay_ms = 250 },
   },
   signature = { enabled = true },
-  fuzzy = { implementation = "lua" },
+  fuzzy = {
+    implementation = "prefer_rust_with_warning",
+    -- The versioned release lets blink download and verify the matching library.
+    prebuilt_binaries = { download = true },
+  },
   cmdline = {
     keymap = {
       preset = "cmdline",

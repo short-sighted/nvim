@@ -8,13 +8,22 @@ function M.check()
   else
     health.error("Neovim 0.12 is required")
   end
-  for _, name in ipairs({ "git", "rg", "node", "npm", "go", "cargo", "dotnet", "python3" }) do
+  for _, name in ipairs({ "git", "curl", "rg", "node", "npm", "go", "cargo", "dotnet", "python3" }) do
     local path = tools.executable(name)
     if path then
       health.ok(name .. ": " .. path)
     else
       health.warn("Missing toolchain: " .. name)
     end
+  end
+  health.start("补全原生模糊匹配")
+  if require("blink.cmp.fuzzy").implementation_type == "rust" then
+    health.ok("Rust 模糊匹配已启用：" .. require("blink.cmp.fuzzy.download.files").lib_path)
+  else
+    health.warn("当前补全使用 Lua，原生模糊匹配尚未就绪。", {
+      ":checkhealth blink.cmp 检查平台与下载依赖，:messages 查看下载错误。",
+      "可用 Rust/Cargo 工具链时执行 :BlinkCmp build，再重启 Neovim；:BlinkCmp build-log 查看日志。",
+    })
   end
   health.start("Language servers (Mason preferred)")
   local servers = {

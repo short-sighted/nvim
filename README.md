@@ -25,6 +25,7 @@ Windows 的默认 shell 优先选择 PATH 中的 PowerShell 7（`pwsh`），未�
 ```vim
 :Mason
 :checkhealth user
+:checkhealth blink.cmp
 :checkhealth mason
 :checkhealth vim.lsp
 :ConformInfo
@@ -41,6 +42,10 @@ Windows 的默认 shell 优先选择 PATH 中的 PowerShell 7（`pwsh`），未�
 ```
 
 插件更新使用 `:packupdate` / `:lua vim.pack.update()`，审阅原生更新缓冲区后保存确认。服务和工具在 `:Mason` 中更新；registry 使用 `:MasonUpdate`。Headless 检查不自动刷新 registry 或安装服务。
+
+补全的 `libblink_cmp_fuzzy` 是 blink.cmp 的 Rust 原生库，由插件自身管理。配置使用 `prefer_rust_with_warning` 并启用预编译库下载；初次启动需要 Git、curl 和网络。当前锁定的 v1 发布版本会自动按系统/架构下载匹配的库、验证版本和 SHA256；更新插件后，下次启动也会检查是否需要更新原生库。支持的平台包括常见 macOS、Linux 和 Windows，具体以该版本发行包为准。下载失败会提示并回退 Lua，补全仍可用，但缺少 Rust 的容错匹配和使用频率排序等能力。
+
+原生库位于 `stdpath('data')/site/pack/core/opt/blink.cmp/target/release/`，扩展名为 macOS `.dylib`、Linux `.so`、Windows `.dll`。不受支持的平台或无法下载时，可在 Rust/Cargo 工具链可用后执行 `:BlinkCmp build`，用 `:BlinkCmp build-log` 查看构建结果，然后重启 Neovim。`:checkhealth user` 会报告实际启用的是 Rust 还是 Lua；更详细的下载依赖检查使用 `:checkhealth blink.cmp`。库文件属于插件安装数据，不提交到此配置仓库。参见 [blink.cmp v1 模糊匹配安装文档](https://github.com/saghen/blink.cmp/blob/v1.10.2/doc/configuration/fuzzy.md)。
 
 ## LSP
 
@@ -222,6 +227,7 @@ Fugitive 状态页面中 `s/u` 暂存/取消暂存、`=` 查看差异、`cc` 进
 
 ```sh
 nvim --headless -i NONE '+luafile tests/runtime.lua'
+nvim --headless -i NONE '+luafile tests/completion_native.lua'
 nvim --headless -i NONE '+luafile tests/daily.lua'
 nvim --headless -i NONE '+luafile tests/project_tasks.lua'
 nvim --headless -i NONE '+luafile tests/dotnet_isolation.lua'
